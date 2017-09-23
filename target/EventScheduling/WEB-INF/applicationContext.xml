@@ -1,0 +1,204 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/data/mongo
+	    http://www.springframework.org/schema/data/mongo/spring-mongo-1.8.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+	<context:component-scan base-package="com.event" />
+	<mongo:mongo host="127.0.0.1" port="27017" />
+	<mongo:db-factory dbname="eventApp" />
+	<mongo:mapping-converter id="converter"></mongo:mapping-converter>
+	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location">
+			<value>classpath:application.properties</value>
+		</property>
+	</bean>
+
+	<bean id="connectionFactoryRegistry"
+		class="org.springframework.social.connect.support.ConnectionFactoryRegistry">
+		<property name="connectionFactories">
+			<list>
+				<bean
+					class="org.springframework.social.facebook.connect.FacebookConnectionFactory">
+					<constructor-arg value="${app.config.oauth.facebook.apikey}" />
+					<constructor-arg value="${app.config.oauth.facebook.apisecret}" />
+				</bean>
+				<bean
+					class="org.springframework.social.twitter.connect.TwitterConnectionFactory">
+					<constructor-arg value="${app.config.oauth.twitter.apikey}" />
+					<constructor-arg value="${app.config.oauth.twitter.apisecret}" />
+				</bean>
+				<bean
+					class="org.springframework.social.google.connect.GoogleConnectionFactory">
+					<constructor-arg value="${google.consumerKey}" />
+					<constructor-arg value="${google.consumerSecret}" />
+				</bean>
+
+			</list>
+		</property>
+	</bean>
+
+	<!-- facebook share -->
+
+	<bean id="facebookShare" class="com.event.services.OAuthServiceProvider">
+		<constructor-arg name="config" ref="facebookConfigShare" />
+	</bean>
+
+	<bean id="facebookConfigShare" class="com.event.services.OAuthServiceConfig">
+		<constructor-arg value="${app.config.oauth.facebook.apikey}" />
+		<constructor-arg value="${app.config.oauth.facebook.apisecret}" />
+		<constructor-arg value="${app.config.oauth.facebook.callback}" />
+		<constructor-arg value="org.scribe.builder.api.FacebookApi" />
+	</bean>
+	<!-- facebook share parameter -->
+
+	<bean id="oAuth2Parameters" class="org.springframework.social.oauth2.OAuth2Parameters">
+		<constructor-arg>
+			<map>
+				<entry key="redirect_uri" value="${app.config.oauth.facebook.callback}"></entry>
+				<entry key="scope" value="${app.config.oauth.facebook.scope}"></entry>
+			</map>
+		</constructor-arg>
+	</bean>
+	<!-- facebook sign up -->
+
+	<bean id="facebookSignUp" class="com.event.services.OAuthServiceProvider">
+		<constructor-arg name="config" ref="facebookConfigSignUp" />
+	</bean>
+
+	<bean id="facebookConfigSignUp" class="com.event.services.OAuthServiceConfig">
+		<constructor-arg value="${app.config.oauth.facebook.apikey}" />
+		<constructor-arg value="${app.config.oauth.facebook.apisecret}" />
+		<constructor-arg value="${appSignUp.config.oauth.facebook.callback}" />
+		<constructor-arg value="org.scribe.builder.api.FacebookApi" />
+	</bean>
+
+	<!-- facebook signup paramete -->
+	<bean id="oAuthSignupParameters" class="org.springframework.social.oauth2.OAuth2Parameters">
+		<constructor-arg>
+			<map>
+				<entry key="redirect_uri" value="${appSignUp.config.oauth.facebook.callback}"></entry>
+				<entry key="scope" value="${app.config.oauth.facebook.scope}"></entry>
+			</map>
+		</constructor-arg>
+	</bean>
+
+
+       <!-- twitter share -->
+	<bean id="oAuth1Parameters" class="org.springframework.social.oauth1.OAuth1Parameters">
+		<constructor-arg>
+			<map>
+				<entry key="consumerKey" value="${app.config.oauth.twitter.apikey}"></entry>
+				<entry key="consumerSecret" value="${app.config.oauth.twitter.apisecret}"></entry>
+				<entry key="accessToken" value="${app.config.oauth.twitter.accessToken}"></entry>
+				<entry key="accessTokenSecret" value="${app.config.oauth.twitter.accessTokenSecret}"></entry>
+			</map>
+		</constructor-arg>
+	</bean>
+	<!-- google sign up social -->
+	<bean id="googleSignUp" class="com.event.services.OAuthServiceProvider">
+		<constructor-arg name="config" ref="googleSignUpConfig" />
+	</bean>
+
+	<bean id="googleSignUpConfig" class="com.event.services.OAuthServiceConfig">
+		<constructor-arg value="${google.consumerKey}" />
+		<constructor-arg value="${google.consumerSecret}" />
+		<constructor-arg value="${google.consumerCallback}" />
+		<constructor-arg value="org.scribe.builder.api.GoogleApi" />
+	</bean>
+
+	<!-- google signup paramete -->
+	<bean id="oAuthGoogleSignupParameters" class="org.springframework.social.oauth2.OAuth2Parameters">
+		<constructor-arg>
+			<map>
+				<entry key="redirect_uri" value="${google.consumerCallback}"></entry>
+				 <entry key="scope" value="${google.auth.scope}"></entry> 
+			</map>
+		</constructor-arg>
+	</bean>
+       
+       
+       
+	<bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+		<constructor-arg name="mongoDbFactory" ref="mongoDbFactory" />
+	</bean>
+	<bean id="gridFsTemplate" class="org.springframework.data.mongodb.gridfs.GridFsTemplate">
+		<constructor-arg ref="mongoDbFactory" />
+		<constructor-arg ref="converter" />
+	</bean>
+	<!--Applicatio Quartiz -->
+	<bean id="Before48HoursAlert" class="com.event.timer.Before48HoursAlert" />
+	<bean id="TicketQuartiz" class="com.event.timer.TicketQuartiz" />
+	<bean id="Before2HoursStrartAlert" class="com.event.timer.Before2HoursStartAlert" />
+	<!-- Spring Quartz -->
+	<bean name="runBefore48HoursAlert" class="org.springframework.scheduling.quartz.JobDetailBean">
+
+		<property name="jobClass" value="com.event.timer.RunBefore48HoursAlert" />
+
+		<property name="jobDataAsMap">
+			<map>
+				<entry key="run" value-ref="Before48HoursAlert" />
+			</map>
+		</property>
+	</bean>
+	<bean name="runTicketQuartiz" class="org.springframework.scheduling.quartz.JobDetailBean">
+		<property name="jobClass" value="com.event.timer.RunTicketQuartiz" />
+		<property name="jobDataAsMap">
+			<map>
+				<entry key="runTicket" value-ref="TicketQuartiz"></entry>
+			</map>
+		</property>
+	</bean>
+	<bean name="runBefore2HoursStrartAlert" class="org.springframework.scheduling.quartz.JobDetailBean">
+		<property name="jobClass" value="com.event.timer.RunBefore2HoursStartAlert" />
+		<property name="jobDataAsMap">
+			<map>
+				<entry key="be2hours" value-ref="Before2HoursStrartAlert"></entry>
+			</map>
+		</property>
+	</bean>
+	<bean id="simpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+
+		<property name="jobDetail" ref="runBefore48HoursAlert" />
+		<property name="repeatInterval" value="3600000 " />
+		<property name="startDelay" value="1000" />
+
+	</bean>
+	<bean id="ticketTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+		<property name="jobDetail" ref="runTicketQuartiz" />
+		<property name="repeatInterval" value="5000" />
+		<property name="startDelay" value="1000" />
+
+	</bean>
+	<bean id="be2hoursTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
+		<property name="jobDetail" ref="runBefore2HoursStrartAlert" />
+		<property name="repeatInterval" value="11000" />
+		<property name="startDelay" value="1000" />
+
+	</bean>
+
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="jobDetails">
+			<list>
+				<ref bean="runBefore48HoursAlert" />
+				<ref bean="runTicketQuartiz" />
+				<ref bean="runBefore2HoursStrartAlert" />
+			</list>
+		</property>
+
+		<property name="triggers">
+			<list>
+				<ref bean="simpleTrigger" />
+				<ref bean="ticketTrigger" />
+				<ref bean="be2hoursTrigger" />
+			</list>
+		</property>
+	</bean>
+</beans>
